@@ -12,14 +12,6 @@ from instructions import get_instructions
 logger = logging.getLogger("mcp_server_nostromodb")
 logging.basicConfig(level=logging.INFO, format="[nostromodb] %(levelname)s - %(message)s")
 
-def invoke_nostromodb():
-    result = subprocess.run(["nostromodb", "--db_path", "--c"], capture_output=True, text=True)
-
-    # Access the results
-    print("STDOUT:", result.stdout)  # Outputs: Hello World
-    print("Return Code:", result.returncode)  # Outputs: 0 (success)
-    pass
-
 @click.command()
 @click.option(
     "--db_path",
