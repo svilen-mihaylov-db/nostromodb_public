@@ -1,5 +1,6 @@
 from typing import Any
 from mcp.server.fastmcp import FastMCP
+from pathlib import Path
 
 import json
 import logging
@@ -23,15 +24,31 @@ logging.basicConfig(level=logging.INFO, format="[nostromodb] %(levelname)s - %(m
     is_flag=True,
     help="Enable write access to the database. Note: In-memory databases are always writable.",
 )
-def main(db_path: str, read_only: bool):
+@click.option(
+    "--use_docker",
+    is_flag=True,
+    help="If true, use nostromodb docker image, otherwise use local installation (via .deb package)",
+)
+def main(db_path: str, read_only: bool, use_docker: bool):
     instructions = get_instructions(read_only=read_only, db_path=db_path)
 
     # Initialize and run the server
     mcp = FastMCP(name="mcp-server-nostromodb", instructions=instructions)
 
-    common_options = ["nostromodb", "--json_output"]
-    if db_path:
-        common_options.extend(["--db_path", db_path])
+    if use_docker:
+        common_options = ['docker', 'run', '--ulimit', 'nofile=65535:65535']
+        if db_path:
+            common_options.extend(['-v', str(Path(db_path).parent)+':/db'])
+        common_options.append('svilenmihaylov/nostromodb')
+        if db_path:
+            common_options.extend(["--db_path", "/db/"+str(Path(db_path).name)])
+    else:
+        common_options = ["nostromodb"]
+        if db_path:
+            common_options.extend(["--db_path", db_path])
+
+    common_options.append("--json_output")
+
     if read_only:
         common_options.append("--read_only")
     print("Started sever with options: ", common_options)
