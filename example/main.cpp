@@ -6,32 +6,45 @@
 
 struct RS : nostromodb::ResultSetExternal {
     void on_error(std::optional<size_t> stmt_id, std::string_view code, std::string message) override {
-        std::println(std::cout, "Error: {}, {}.", code, message);
-    }
-
-    void set_schema(size_t stmt_id, std::string_view type, Schema schema, SchemaTypes schema_types) override {
-        std::string schema_str;
-        for (size_t i = 0; i < schema.size(); i++) {
-            schema_str += std::format("{}:{}", schema.at(i), schema_types.at(i));
+        if (stmt_id) {
+            std::println(std::cout, "Error during statement {}: {}, {}.", *stmt_id, code, message);
+        } else {
+            std::println(std::cout, "Error: {}, {}.", code, message);
         }
-        std::println(std::cout, "\nSchema for statement: {}/{}:\n{}", stmt_id, type, schema_str);
     }
 
-    void explain(size_t stmt_id, std::string_view plan_type, const std::string &plan_str) override {
-        std::println(std::cout, "Statement {} {} explain:\n{}", stmt_id, plan_type, plan_str);
+    void stmt(StmtGenerator stmt_gen) override {
+        for (auto&& stmt: stmt_gen) {
+            std::string schema_str;
+            for (size_t i = 0; i < stmt._schema.size(); i++) {
+                schema_str += std::format("{}:{}", stmt._schema.at(i), stmt._schema_types.at(i));
+            }
+            std::println(std::cout, "\n\nSchema for statement: {}/{}:\n{}", stmt._stmt_id, stmt._type, schema_str);
+
+            if (auto& expl = stmt._explain) {
+                std::println(std::cout, "Explain:\n{}", expl->_plan_type, expl->_plan_str);
+            }
+
+            if (auto& chunk_gen = stmt._chunk_gen) {
+                for (auto&& chunk: *chunk_gen) {
+                    if (chunk._is_rid) {
+                        std::println(std::cout, "Received chunk for column {} at offset {}:", chunk._col_id, chunk._offset);
+                    } else {
+                        std::println(std::cout, "Received chunk for row_id at offset {}:", chunk._offset);
+                    }
+
+                    std::visit([](auto& v) {
+                        std::cout << "======================\n";
+                        for (auto&& el: v) {
+                            std::cout << el << "\n";
+                        }
+                        std::cout << "======================\n";
+                    }, chunk._vec);
+                }
+            }
+        }
     }
 
-    void column_chunk(size_t stmt_id, size_t col_id, size_t offset, std::vector<nlohmann::json> chunk) override {
-        std::println(std::cout, "Statement {}: received column chunk for column {} at offset {}:\n{}", stmt_id, col_id, offset, to_string(nlohmann::json(chunk)));
-    }
-
-    void row_ids_chunk(size_t stmt_id, size_t offset, std::vector<uint64_t> chunk) override {
-        std::println(std::cout, "Statement {}: received row_id at offset {}:\n{}", stmt_id, offset, to_string(nlohmann::json(chunk)));
-    }
-
-    void finished(size_t stmt_id, size_t num_selected, bool has_error) override {
-        std::println(std::cout, "Statement {} finished.", stmt_id);
-    }
 };
 
 void run_nostromodb_queries() {
@@ -43,6 +56,8 @@ pragma show_tables();
 select a, b from t;
 select sum(a) from t
 )");
+    mgr.run_statements("select invalid");
+    mgr.run_statements("explain select 1+1");
 }
 
 int main() {
