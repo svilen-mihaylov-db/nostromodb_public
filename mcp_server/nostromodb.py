@@ -80,7 +80,7 @@ def main(db_path: str, read_only: bool, use_docker: bool):
         """
 
         options = common_options.copy()
-        options.extend(["--c", "pragma show_tables()"])
+        options.extend(["--c", "pragma show_tables();"])
         #print("Listing tables with", options)
 
         result = subprocess.run(options, capture_output=True, text=True, check=True)
@@ -93,7 +93,7 @@ def main(db_path: str, read_only: bool, use_docker: bool):
         """
 
         options = common_options.copy()
-        options.extend(["--c", f"select concat_arr(*, '.') from unpack(pragma_approx_columns('{table}'))"])
+        options.extend(["--c", f"select concat_arr(*, '.') from unpack(pragma_approx_columns('{table}'));"])
         #print("Listing columns with", options)
 
         result = subprocess.run(options, capture_output=True, text=True, check=True)
