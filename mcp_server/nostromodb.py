@@ -68,7 +68,7 @@ def main(db_path: str, read_only: bool, use_docker: bool):
 
         options = common_options.copy()
         options.extend(["--c", sql])
-        print("Running sql query with", options)
+        #print("Running sql query with", options)
 
         result = subprocess.run(options, capture_output=True, text=True, check=True)
         return result.stdout
@@ -81,7 +81,7 @@ def main(db_path: str, read_only: bool, use_docker: bool):
 
         options = common_options.copy()
         options.extend(["--c", "pragma show_tables()"])
-        print("Listing tables with", options)
+        #print("Listing tables with", options)
 
         result = subprocess.run(options, capture_output=True, text=True, check=True)
         return result.stdout
@@ -94,7 +94,7 @@ def main(db_path: str, read_only: bool, use_docker: bool):
 
         options = common_options.copy()
         options.extend(["--c", f"select concat_arr(*, '.') from unpack(pragma_approx_columns('{table}'))"])
-        print("Listing columns with", options)
+        #print("Listing columns with", options)
 
         result = subprocess.run(options, capture_output=True, text=True, check=True)
         return result.stdout
