@@ -70,7 +70,7 @@ def main(db_path: str, read_only: bool, use_docker: bool):
         options.extend(["--c", sql])
         #print("Running sql query with", options)
 
-        result = subprocess.run(options, capture_output=True, text=True, check=True)
+        result = subprocess.run(options, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         return result.stdout
 
     @mcp.tool()
@@ -83,7 +83,7 @@ def main(db_path: str, read_only: bool, use_docker: bool):
         options.extend(["--c", "pragma show_tables();"])
         #print("Listing tables with", options)
 
-        result = subprocess.run(options, capture_output=True, text=True, check=True)
+        result = subprocess.run(options, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         return result.stdout
 
     @mcp.tool()
@@ -96,7 +96,7 @@ def main(db_path: str, read_only: bool, use_docker: bool):
         options.extend(["--c", f"select concat_arr(*, '.') from unpack(pragma_approx_columns('{table}'));"])
         #print("Listing columns with", options)
 
-        result = subprocess.run(options, capture_output=True, text=True, check=True)
+        result = subprocess.run(options, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         return result.stdout
 
     mcp.run(transport="stdio")
